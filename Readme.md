@@ -6,7 +6,6 @@ A live poll in Go
 
 ```
 go build
-go get -u
 ./poller start
 ```
 
