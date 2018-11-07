@@ -150,6 +150,8 @@ func start() {
 
 	r := mux.NewRouter()
 
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("html"))))
+
 	var baseUrl = fmt.Sprintf("/polls/%s", poll.Name)
 	var voteUrl = fmt.Sprintf("/polls/%s/{vote}", poll.Name)
 
