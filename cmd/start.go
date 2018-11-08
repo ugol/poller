@@ -98,9 +98,18 @@ func PollHandler(w http.ResponseWriter, r *http.Request) {
 	//data := map[string]string{"vote": vars["vote"]}
 	//client.Trigger(poll.Name, "vote-event", data)
 
-	results[vars["vote"]]++
-	fmt.Fprintf(w, "You voted: %v\n", vars["vote"])
-	log.Printf("Vote received: %v\n", vars["vote"])
+	vote := vars["vote"]
+
+	if _, found := results[vote]; found {
+		results[vote]++
+		fmt.Fprintf(w, "You voted: %v\n", vote)
+		log.Printf("Vote received: %v\n", vote)
+
+	} else {
+		fmt.Fprintf(w, "Invalid voted received: %v\n", vote)
+		log.Printf("Invalid vote: %v\n", vote)
+	}
+
 }
 
 func init() {
