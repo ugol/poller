@@ -122,6 +122,7 @@ func init() {
 	startCmd.Flags().DurationVar(&gracefulTimeout, "gracefulTimeout", time.Second * 15, "Graceful Timeout is the duration for which the server gracefully wait for existing connections to finish")
 
 	results = make(map[string]int)
+
 }
 
 func start() {
@@ -145,6 +146,12 @@ func start() {
 	}
 
 	log.Printf("Using JSON \"%s\" poll description:\n %s \n", pollJson, poll)
+
+	for _,option := range poll.Options {
+		log.Println(option)
+		results[option] = 0
+	}
+
 
 	log.Printf("\n GracefulTimeout %s\n WriteTimeout %s\n ReadTimeout %s\n IdleTimeout %s\n", gracefulTimeout, writeTimeout, readTimeout, idleTimeout )
 
