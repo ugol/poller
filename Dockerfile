@@ -4,5 +4,4 @@ WORKDIR /go/src/app
 COPY . .
 RUN go get -d -v ./...
 RUN go install -v ./...
-ENTRYPOINT /go/bin/app
-CMD ["$typology"]
+ENTRYPOINT /go/src/app/start.sh
