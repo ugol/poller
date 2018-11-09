@@ -1,2 +1,9 @@
 #!/bin/bash
-/go/bin/app $typology
+APP_ID=${HOSTNAME:(-4)}
+if [ "${typology}" == "results" ]
+then
+  execute="results"
+elif [ "${typology}" == "poller" ]
+  execute="start --pollerAddress=$HOSTNAME:9090"
+fi
+export APP_ID && /go/bin/app $execute
