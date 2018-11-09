@@ -21,6 +21,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -36,17 +37,17 @@ type Poll struct {
 var (
 	pollJson		string
 	logDir     		string
-	address			string
+	pollerAddress	string
+	mcastAddress	string
 
-	//APP_ID			string
-	//APP_KEY			string
-	//APP_SECRET		string
-	//APP_CLUSTER		string
+	APP_ID			string
 
 	writeTimeout 	time.Duration
 	readTimeout 	time.Duration
 	idleTimeout 	time.Duration
 	gracefulTimeout time.Duration
+
+	mcastInterval	time.Duration
 
 	poll *Poll
 	results 		map[string]int
@@ -61,42 +62,14 @@ poller start --address localhost:8080
 poller start --address localhost:8080 --gracefulTimeout 1m
 poller start --address localhost:8080 --gracefulTimeout 1m --readTimeout 30s`,
 	Run: func(cmd *cobra.Command, args []string) {
-		start()
+		startPollServer()
 	},
-}
-
-func ResultsHandler(w http.ResponseWriter, r *http.Request) {
-
-
-	result, err := json.Marshal(results)
-
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(err)
-	} else {
-		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(result)
-		log.Printf("Results: %v\n", results)
-	}
-
 }
 
 func PollHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-
-	//client := pusher.Client{
-	//	AppId:   APP_ID,
-	//	Key:     APP_KEY,
-	//	Secret:  APP_SECRET,
-	//	Cluster: APP_CLUSTER,
-	//	Secure:  true,
-	//}
-	//
-	//data := map[string]string{"vote": vars["vote"]}
-	//client.Trigger(poll.Name, "vote-event", data)
 
 	vote := vars["vote"]
 
@@ -117,27 +90,49 @@ func init() {
 	rootCmd.AddCommand(startCmd)
 
 	startCmd.Flags().StringVar(&logDir, "logdir", "tmp/poller", "")
-	startCmd.Flags().StringVar(&address, "address", "localhost:8080", "Address to bind on")
+	startCmd.Flags().StringVar(&pollerAddress, "pollerAddress", "localhost:8080", "Address to bind on")
+	startCmd.Flags().StringVar(&mcastAddress, "mcastAddress", "224.0.0.1:9999", "Multicast address used to broadcast the results")
 	startCmd.Flags().StringVar(&pollJson, "pollJson", "polls/default.json", "Name of the JSON file describing the poll")
 
-	//startCmd.Flags().StringVar(&APP_ID, "APP_ID", os.Getenv("APP_ID"), "Pusher APP_ID")
-	//startCmd.Flags().StringVar(&APP_ID, "APP_KEY", os.Getenv("APP_KEY"), "Pusher APP_KEY")
-	//startCmd.Flags().StringVar(&APP_ID, "APP_SECRET", os.Getenv("APP_SECRET"), "Pusher APP_SECRET")
-	//startCmd.Flags().StringVar(&APP_ID, "APP_CLUSTER", os.Getenv("APP_CLUSTER"), "Pusher APP_CLUSTER")
+	startCmd.Flags().StringVar(&APP_ID, "APP_ID", os.Getenv("APP_ID"), "APP_ID is an unique identifier that must be used when scaling poller horizontally. Only the last 4 bytes are significant")
+
+	startCmd.Flags().DurationVar(&mcastInterval, "mcastInterval", time.Second * 1, "Interval to multicast the results")
 
 	startCmd.Flags().DurationVar(&writeTimeout, "writeTimeout", time.Second * 15, "Write Timeout")
 	startCmd.Flags().DurationVar(&readTimeout, "readTimeout", time.Second * 15, "Read Timeout")
 	startCmd.Flags().DurationVar(&idleTimeout, "idleTimeout", time.Second * 60, "Idle Timeout")
 	startCmd.Flags().DurationVar(&gracefulTimeout, "gracefulTimeout", time.Second * 15, "Graceful Timeout is the duration for which the server gracefully wait for existing connections to finish")
 
-	results = make(map[string]int)
-
 }
 
-func start() {
+func broadcastResults() {
+	addr, err := net.ResolveUDPAddr("udp", mcastAddress)
+	if err != nil {
+		log.Fatal(err)
+	}
+	c, err := net.DialUDP("udp", nil, addr)
+	for {
+
+		r, err := json.Marshal(results)
+
+		if err != nil {
+			log.Println(err)
+		} else {
+			c.Write([]byte(fmt.Sprintf("%s%s", APP_ID[len(APP_ID)-4:], r)))
+		}
+
+		time.Sleep(mcastInterval)
+	}
+}
+
+func startPollServer() {
 
 	log.Println("Starting Poller server")
 
+	if len(APP_ID)<4 {
+		log.Printf("APP_ID must be 4 bytes, but is %d bytes. ('%s')\n", len(APP_ID), APP_ID)
+		os.Exit(1)
+	}
 
 	file, err := os.Open(pollJson)
 	if err != nil {
@@ -156,11 +151,11 @@ func start() {
 
 	log.Printf("Using JSON \"%s\" poll description:\n %s \n", pollJson, poll)
 
+	results = make(map[string]int)
+
 	for _,option := range poll.Options {
-		log.Println(option)
 		results[option] = 0
 	}
-
 
 	log.Printf("\n GracefulTimeout %s\n WriteTimeout %s\n ReadTimeout %s\n IdleTimeout %s\n", gracefulTimeout, writeTimeout, readTimeout, idleTimeout )
 
@@ -168,10 +163,8 @@ func start() {
 
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("html"))))
 
-	var baseUrl = fmt.Sprintf("/polls/%s", poll.Name)
 	var voteUrl = fmt.Sprintf("/polls/%s/{vote}", poll.Name)
 
-	r.HandleFunc(baseUrl, ResultsHandler).Methods("GET")
 	r.HandleFunc(voteUrl, PollHandler).Methods("POST")
 
 	http.Handle("/", r)
@@ -179,7 +172,7 @@ func start() {
 
 	srv := &http.Server{
 
-		Addr:         address,
+		Addr:         pollerAddress,
 		WriteTimeout: writeTimeout,
 		ReadTimeout:  readTimeout,
 		IdleTimeout:  idleTimeout,
@@ -192,7 +185,18 @@ func start() {
 		}
 	}()
 
-	log.Printf("Waiting for connections at %s\n", address)
+	log.Printf("Waiting for connections at %s\n", pollerAddress)
+
+	go func() {
+		broadcastResults()
+	}()
+
+	if len(APP_ID)<4 {
+		log.Printf("APP_ID must be 4 bytes, but is %n bytes. ('%s')\n", len(APP_ID), APP_ID)
+		os.Exit(1)
+	}
+
+	log.Printf("Started broadcasting poll results on %s using APP_ID '%s' every %s\n", mcastAddress, APP_ID, mcastInterval)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
