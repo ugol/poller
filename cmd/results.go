@@ -78,7 +78,7 @@ func init() {
 	rootCmd.AddCommand(resultsCmd)
 
 	resultsCmd.Flags().StringVar(&logDir, "logdir", "tmp/poller", "")
-	resultsCmd.Flags().StringVar(&resultAddress, "resultAddress", "localhost:8082", "Address to bind on")
+	resultsCmd.Flags().StringVar(&resultAddress, "resultAddress", "localhost:9090", "Address to bind on")
 	resultsCmd.Flags().StringVar(&mcastAddress, "mcastAddress", "224.0.0.1:9999", "Multicast address used to broadcast the results")
 	resultsCmd.Flags().StringVar(&pollJson, "pollJson", "polls/default.json", "Name of the JSON file describing the poll")
 
