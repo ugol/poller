@@ -10,9 +10,9 @@ go build
 
 Start several poller servers:
 ```
-EXPORT APP_ID=1000 && ./poller start
-EXPORT APP_ID=1001 && ./poller start --pollerAddress=localhost:8081
-EXPORT APP_ID=1002 && ./poller start --pollerAddress=localhost:8082
+export APP_ID=1000 && ./poller start
+export APP_ID=1001 && ./poller start --pollerAddress=localhost:8081
+export APP_ID=1002 && ./poller start --pollerAddress=localhost:8082
 ```
 
 Start a results server:
