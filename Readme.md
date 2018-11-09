@@ -6,11 +6,42 @@ A live poll in Go
 
 ```
 go build
-./poller start
+```
+
+Start several poller servers:
+```
+EXPORT APP_ID=1000 && ./poller start
+EXPORT APP_ID=1001 && ./poller start --pollerAddress=localhost:8081
+EXPORT APP_ID=1002 && ./poller start --pollerAddress=localhost:8082
+```
+
+Start a results server:
+
+```
+./poller results
+```
+
+Vote on different servers, for example:
+
+```
+curl -X POST http://localhost:8080/polls/poll1/uno
+curl -X POST http://localhost:8080/polls/poll1/due
+curl -X POST http://localhost:8080/polls/poll1/tre
+curl -X POST http://localhost:8081/polls/poll1/due
+curl -X POST http://localhost:8082/polls/poll1/tre
+curl -X POST http://localhost:8082/polls/poll1/tre
+
+```
+
+Observe that results are aggregated on results server:
+
+```
+curl http://localhost:9090/polls/poll1
 ```
 
 ## Getting help
 
 ```
 ./poller start -h
+./poller results -h
 ```
