@@ -7,4 +7,4 @@ elif [ "${typology}" == "poller" ]
 then
   execute="start --pollerAddress=$HOSTNAME:9090"
 fi
-export APP_ID && /go/bin/app $execute
+export APP_ID && /go/bin/poller $execute
