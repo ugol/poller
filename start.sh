@@ -2,7 +2,7 @@
 APP_ID=${HOSTNAME:(-4)}
 if [ "${typology}" == "results" ]
 then
-  execute="results"
+  execute="results --pollerAddress=$HOSTNAME:9090"
 elif [ "${typology}" == "poller" ]
 then
   execute="start --pollerAddress=$HOSTNAME:9090"
