@@ -129,8 +129,8 @@ func startPollServer() {
 
 	log.Println("Starting Poller server")
 
-	if len(APP_ID)<4 {
-		log.Printf("APP_ID must be 4 bytes, but is %d bytes. ('%s')\n", len(APP_ID), APP_ID)
+	if len(APP_ID)<5 {
+		log.Printf("APP_ID must be 5 bytes or greater, but is %d bytes. ('%s')\n", len(APP_ID), APP_ID)
 		os.Exit(1)
 	}
 
@@ -190,11 +190,6 @@ func startPollServer() {
 	go func() {
 		broadcastResults()
 	}()
-
-	if len(APP_ID)<4 {
-		log.Printf("APP_ID must be 4 bytes, but is %n bytes. ('%s')\n", len(APP_ID), APP_ID)
-		os.Exit(1)
-	}
 
 	log.Printf("Started broadcasting poll results on %s using APP_ID '%s' every %s\n", mcastAddress, APP_ID, mcastInterval)
 

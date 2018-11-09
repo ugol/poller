@@ -91,9 +91,9 @@ func init() {
 
 func msgHandler(src *net.UDPAddr, n int, b []byte) {
 
-	app_id := string(b[0:4])
+	app_id := string(b[0:5])
 	m := make(map[string]int)
-	json.Unmarshal(b[4:n], &m)
+	json.Unmarshal(b[5:n], &m)
 
 	partialResults[app_id] = m
 	//log.Println(partialResults)
