@@ -49,8 +49,8 @@ var (
 
 	mcastInterval	time.Duration
 
-	poll *Poll
-	results 		map[string]int
+	ThePoll *Poll
+	results map[string]int
 )
 
 var startCmd = &cobra.Command{
@@ -118,7 +118,7 @@ func broadcastResults() {
 		if err != nil {
 			log.Println(err)
 		} else {
-			c.Write([]byte(fmt.Sprintf("%s%s", APP_ID[len(APP_ID)-4:], r)))
+			c.Write([]byte(fmt.Sprintf("%s%s", APP_ID[len(APP_ID)-5:], r)))
 		}
 
 		time.Sleep(mcastInterval)
@@ -143,17 +143,17 @@ func startPollServer() {
 
 	defer file.Close()
 
-	err = json.NewDecoder(file).Decode(&poll)
+	err = json.NewDecoder(file).Decode(&ThePoll)
 	if err != nil {
 		log.Println(err)
 		os.Exit(1)
 	}
 
-	log.Printf("Using JSON \"%s\" poll description:\n %s \n", pollJson, poll)
+	log.Printf("Using JSON \"%s\" poll description:\n %s \n", pollJson, ThePoll)
 
 	results = make(map[string]int)
 
-	for _,option := range poll.Options {
+	for _,option := range ThePoll.Options {
 		results[option] = 0
 	}
 
@@ -163,7 +163,7 @@ func startPollServer() {
 
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("html"))))
 
-	var voteUrl = fmt.Sprintf("/polls/%s/{vote}", poll.Name)
+	var voteUrl = fmt.Sprintf("/polls/%s/{vote}", ThePoll.Name)
 
 	r.HandleFunc(voteUrl, PollHandler).Methods("POST")
 

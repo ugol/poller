@@ -49,11 +49,11 @@ poller results --address localhost:8082 --gracefulTimeout 1m --readTimeout 30s`,
 func ResultsHandler(w http.ResponseWriter, r *http.Request) {
 
 	res := make(map[string]int)
-	for _,option := range poll.Options {
+	for _,option := range ThePoll.Options {
 		res[option] = 0
 	}
 
-	for _, m := range(partialResults) {
+	for _, m := range partialResults {
 		for k, v := range m {
 			res[k] = res[k] + v
 		}
@@ -89,13 +89,13 @@ func init() {
 
 }
 
-func msgHandler(src *net.UDPAddr, n int, b []byte) {
+func msgHandler(_ *net.UDPAddr, n int, b []byte) {
 
-	app_id := string(b[0:5])
+	appId := string(b[0:5])
 	m := make(map[string]int)
 	json.Unmarshal(b[5:n], &m)
 
-	partialResults[app_id] = m
+	partialResults[appId] = m
 	//log.Println(partialResults)
 
 }
@@ -132,13 +132,13 @@ func startResultServer() {
 
 	defer file.Close()
 
-	err = json.NewDecoder(file).Decode(&poll)
+	err = json.NewDecoder(file).Decode(&ThePoll)
 	if err != nil {
 		log.Println(err)
 		os.Exit(1)
 	}
 
-	log.Printf("Using JSON \"%s\" poll description:\n %s \n", pollJson, poll)
+	log.Printf("Using JSON \"%s\" ThePoll description:\n %s \n", pollJson, ThePoll)
 
 	partialResults = make(map[string]map[string]int)
 
@@ -148,7 +148,7 @@ func startResultServer() {
 
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("html"))))
 
-	var baseUrl = fmt.Sprintf("/polls/%s", poll.Name)
+	var baseUrl = fmt.Sprintf("/polls/%s", ThePoll.Name)
 
 	r.HandleFunc(baseUrl, ResultsHandler).Methods("GET")
 
