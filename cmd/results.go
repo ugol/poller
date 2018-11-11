@@ -148,9 +148,9 @@ func startResultServer() {
 
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("html"))))
 
-	var baseUrl = fmt.Sprintf("/polls/%s", ThePoll.Name)
+	var resultsUrl = fmt.Sprintf("/polls/%s", ThePoll.Name)
 
-	r.HandleFunc(baseUrl, ResultsHandler).Methods("GET")
+	r.HandleFunc(resultsUrl, ResultsHandler).Methods("GET")
 
 	http.Handle("/", r)
 
