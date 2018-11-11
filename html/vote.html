@@ -6,11 +6,11 @@
 </head>
 <body>
 
-Poll: {{.Name}} <br>
+Poll: {{.PollDescription}} <br>
 
-{{range .Options}}
+{{range $k, $v := .Options}}
 
-<a href="{{.}}">{{.}}</a> <br>
+<a href="{{$k}}">{{.}}</a> <br>
 
 {{end}}
 

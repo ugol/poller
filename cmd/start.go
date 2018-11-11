@@ -32,7 +32,8 @@ import (
 
 type Poll struct {
 	Name            string
-	Options         []string `json:"options"`
+	PollDescription	string
+	Options         map[string]string
 }
 
 var (
