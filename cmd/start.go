@@ -169,7 +169,7 @@ func startPollServer() {
 
 	results = make(map[string]int)
 
-	for _,option := range ThePoll.Options {
+	for option,_ := range ThePoll.Options {
 		results[option] = 0
 	}
 
