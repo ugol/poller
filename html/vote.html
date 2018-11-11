@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>{{.Name}}</title>
+    <style>
+        .inline {
+            display: inline;
+        }
+
+        .link-button {
+            background: none;
+            border: none;
+            color: blue;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 1em;
+            font-family: serif;
+        }
+
+        .link-button:focus {
+            outline: none;
+        }
+
+        .link-button:active {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Poll: {{.PollDescription}} </h1>
+
+{{range $k, $v := .Options}}
+
+<form method="post" action="{{$k}}" class="inline">
+    <input type="hidden" name="extra_submit_param" value="extra_submit_value">
+    <button type="submit" name="submit_param" value="{{$k}}" class="link-button">
+    {{.}}
+    </button>
+</form>
+
+<br>
+{{end}}
+
+</body>
+</html>
+
+

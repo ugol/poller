@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
+	"html/template"
 	"log"
 	"net"
 	"net/http"
@@ -31,7 +32,8 @@ import (
 
 type Poll struct {
 	Name            string
-	Options         []string `json:"options"`
+	PollDescription	string
+	Options         map[string]string
 }
 
 var (
@@ -49,8 +51,10 @@ var (
 
 	mcastInterval	time.Duration
 
-	ThePoll *Poll
-	results map[string]int
+	ThePoll 		*Poll
+	results 		map[string]int
+	vote  =			template.Must(template.ParseFiles("html/vote.html"))
+
 )
 
 var startCmd = &cobra.Command{
@@ -67,21 +71,33 @@ poller start --address localhost:8080 --gracefulTimeout 1m --readTimeout 30s`,
 }
 
 func PollHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "application/json")
 
-	vote := vars["vote"]
+	if r.Method == http.MethodPost {
+		log.Printf("Serving POST %v to %s\n", r.RequestURI, r.RemoteAddr  )
 
-	if _, found := results[vote]; found {
-		results[vote]++
-		fmt.Fprintf(w, "You voted: %v\n", vote)
-		log.Printf("Vote received: %v\n", vote)
+		vars := mux.Vars(r)
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
 
-	} else {
-		fmt.Fprintf(w, "Invalid voted received: %v\n", vote)
-		log.Printf("Invalid vote: %v\n", vote)
+		vote := vars["vote"]
+
+		if _, found := results[vote]; found {
+			results[vote]++
+			fmt.Fprintf(w, "You voted: %v\n", vote)
+			log.Printf("Vote received: %v\n", vote)
+
+		} else {
+			fmt.Fprintf(w, "Invalid voted received: %v\n", vote)
+			log.Printf("Invalid vote: %v\n", vote)
+		}
+	} else if r.Method == http.MethodGet {
+		log.Printf("Serving GET %v to %s\n", r.RequestURI, r.RemoteAddr  )
+		err := vote.ExecuteTemplate(w,"vote.html", ThePoll)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	}
+
 
 }
 
@@ -153,7 +169,7 @@ func startPollServer() {
 
 	results = make(map[string]int)
 
-	for _,option := range ThePoll.Options {
+	for option,_ := range ThePoll.Options {
 		results[option] = 0
 	}
 
@@ -161,11 +177,13 @@ func startPollServer() {
 
 	r := mux.NewRouter()
 
-	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("html"))))
+	//r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("html"))))
 
-	var voteUrl = fmt.Sprintf("/polls/%s/{vote}", ThePoll.Name)
+	var voteUrl = fmt.Sprintf("/polls/%s/leaveyourvote", ThePoll.Name)
+	var votesUrl = fmt.Sprintf("/polls/%s/{vote}", ThePoll.Name)
 
-	r.HandleFunc(voteUrl, PollHandler).Methods("POST")
+	r.HandleFunc(voteUrl, PollHandler).Methods("GET")
+	r.HandleFunc(votesUrl, PollHandler).Methods("POST")
 
 	http.Handle("/", r)
 

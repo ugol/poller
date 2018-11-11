@@ -1,8 +1,9 @@
 {
   "name": "poll1",
-  "options": [
-    "undici",
-    "dodici",
-    "tredici"
-  ]
+  "pollDescription": "What number do you think is the best?",
+  "options": {
+    "one": "One is definitely the first",
+    "two": "Two is better than one",
+    "three": "Three is the magic number"
+  }
 }
