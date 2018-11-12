@@ -49,7 +49,7 @@ poller results --address localhost:8082 --gracefulTimeout 1m --readTimeout 30s`,
 func ResultsHandler(w http.ResponseWriter, r *http.Request) {
 
 	res := make(map[string]int)
-	for _,option := range ThePoll.Options {
+	for option := range ThePoll.Options {
 		res[option] = 0
 	}
 
@@ -146,11 +146,10 @@ func startResultServer() {
 
 	r := mux.NewRouter()
 
-	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("html"))))
-
-	var resultsUrl = fmt.Sprintf("/polls/%s", ThePoll.Name)
+	var resultsUrl = fmt.Sprintf("/polls/results")
 
 	r.HandleFunc(resultsUrl, ResultsHandler).Methods("GET")
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("html"))))
 
 	http.Handle("/", r)
 

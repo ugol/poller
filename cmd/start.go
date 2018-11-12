@@ -177,8 +177,6 @@ func startPollServer() {
 
 	r := mux.NewRouter()
 
-	//r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("html"))))
-
 	var voteUrl = fmt.Sprintf("/polls/%s/leaveyourvote", ThePoll.Name)
 	var votesUrl = fmt.Sprintf("/polls/%s/{vote}", ThePoll.Name)
 
@@ -186,7 +184,6 @@ func startPollServer() {
 	r.HandleFunc(votesUrl, PollHandler).Methods("POST")
 
 	http.Handle("/", r)
-
 
 	srv := &http.Server{
 
