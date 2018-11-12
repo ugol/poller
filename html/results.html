@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+
+<head>
+	<title>Bar Chart</title>
+    <script src="./js/Chart.bundle.min.js"></script>
+    <script src="./js/jquery-3.3.1.min.js"></script>
+	<style>
+	canvas {
+		-moz-user-select: none;
+		-webkit-user-select: none;
+		-ms-user-select: none;
+	}
+	</style>
+</head>
+
+<body>
+	<div id="container" style="width: 75%;">
+		<canvas id="bar-chart"></canvas>
+	</div>
+
+	<script>
+        new Chart(document.getElementById("bar-chart"), {
+            type: 'bar',
+            data: {
+                labels: ["Africa", "Asia", "Europe", "Latin America", "North America"],
+                datasets: [
+                    {
+                        label: "Population (millions)",
+                        backgroundColor: ["#3e95cd", "#8e5ea2","#3cba9f","#e8c3b9","#c45850"],
+                        data: [2478,5267,734,784,433]
+                    }
+                ]
+            },
+            options: {
+                legend: { display: false },
+                title: {
+                    display: true,
+                    text: 'Predicted world population (millions) in 2050'
+                }
+            }
+        });
+
+        $.getJSON("./polls/results", function (data) {
+            console.log("boh")
+        })
+	</script>
+</body>
+
+</html>
