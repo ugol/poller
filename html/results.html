@@ -20,15 +20,15 @@
 	</div>
 
 	<script>
-        new Chart(document.getElementById("bar-chart"), {
-            type: 'bar',
+        chart = new Chart(document.getElementById("bar-chart"), {
+            type: 'horizontalBar',
             data: {
-                labels: ["Africa", "Asia", "Europe", "Latin America", "North America"],
+                labels: [],
                 datasets: [
                     {
-                        label: "Population (millions)",
+                        label: "",
                         backgroundColor: ["#3e95cd", "#8e5ea2","#3cba9f","#e8c3b9","#c45850"],
-                        data: [2478,5267,734,784,433]
+                        data: []
                     }
                 ]
             },
@@ -36,14 +36,58 @@
                 legend: { display: false },
                 title: {
                     display: true,
-                    text: 'Predicted world population (millions) in 2050'
+                    text: 'Poll Results'
+                },
+                scales: {
+                    yAxes: [{
+                            display: true,
+                            gridLinse: {
+                                display: false
+                            }
+                        }],
+                    xAxes: [{
+                            display: true,
+                            stacked: true,
+                            ticks: {
+                                beginAtZero: true,
+                                precision: 0
+                            },
+                            scaleLabel: {
+                                display: true
+                            }
+                        }]
                 }
             }
         });
 
-        $.getJSON("../polls/results", function (data) {
-            console.log("boh")
-        })
+
+        (function poll() {
+            $.ajax({
+                url: "../polls/results",
+                type: "GET",
+                success: function(data) {
+                    charData = [];
+                    charLabels = [];
+                    Object.getOwnPropertyNames(data)
+                        .forEach((label) => {
+                            charLabels.push(label);
+                            charData.push(data[label]);
+                        });
+                    chart.data.datasets.forEach((dataset) => {
+                            dataset.data = charData;
+                        });
+                    chart.data.labels = charLabels;
+
+                    chart.update();
+                },
+                error: function(data) {
+                    console.log("polling error");
+                },
+                dataType: "json",
+                complete: setTimeout(function() {poll()}, 5000),
+                timeout: 5000
+            })
+        })();
 	</script>
 </body>
 
