@@ -26,6 +26,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"time"
 )
 
@@ -53,6 +54,7 @@ var (
 
 	ThePoll 		*Poll
 	results 		map[string]int
+	mutex			sync.Mutex
 	vote  =			template.Must(template.ParseFiles("html/vote.html"))
 
 )
@@ -81,8 +83,9 @@ func PollHandler(w http.ResponseWriter, r *http.Request) {
 
 		vote := vars["vote"]
 
-		if _, found := results[vote]; found {
-			results[vote]++
+		resultsCopy := getResults()
+		if _, found := resultsCopy[vote]; found {
+			updateVote(vote)
 			fmt.Fprintf(w, "You voted: %v\n", vote)
 			log.Printf("Vote received: %v\n", vote)
 
@@ -91,14 +94,32 @@ func PollHandler(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Invalid vote: %v\n", vote)
 		}
 	} else if r.Method == http.MethodGet {
-		log.Printf("Serving GET %v to %s\n", r.RequestURI, r.RemoteAddr  )
-		err := vote.ExecuteTemplate(w,"vote.html", ThePoll)
+		log.Printf("Serving GET %v to %s\n", r.RequestURI, r.RemoteAddr)
+		err := vote.ExecuteTemplate(w, "vote.html", ThePoll)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
 
+}
 
+func getResults() map[string]int {
+
+	copyResults := make(map[string]int)
+
+	mutex.Lock()
+	defer mutex.Unlock()
+	for key, value := range results {
+		copyResults[key] = value
+	}
+
+	return copyResults
+}
+
+func updateVote(vote string) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	results[vote]++
 }
 
 func init() {
@@ -129,7 +150,7 @@ func broadcastResults() {
 	c, err := net.DialUDP("udp", nil, addr)
 	for {
 
-		r, err := json.Marshal(results)
+		r, err := json.Marshal(getResults())
 
 		if err != nil {
 			log.Println(err)
