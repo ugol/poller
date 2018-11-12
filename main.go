@@ -14,7 +14,7 @@
 
 package main
 
-import "github.com/spagno/poller/cmd"
+import "github.com/ugol/poller/cmd"
 
 func main() {
 	cmd.Execute()
