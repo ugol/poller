@@ -83,9 +83,11 @@ func PollHandler(w http.ResponseWriter, r *http.Request) {
 
 		vote := vars["vote"]
 
-		resultsCopy := getResults()
-		if _, found := resultsCopy[vote]; found {
-			updateVote(vote)
+		mutex.Lock()
+		defer mutex.Unlock()
+		if _, found := results[vote]; found {
+			results[vote]++
+
 			fmt.Fprintf(w, "You voted: %v\n", vote)
 			log.Printf("Vote received: %v\n", vote)
 
@@ -114,12 +116,6 @@ func getResults() map[string]int {
 	}
 
 	return copyResults
-}
-
-func updateVote(vote string) {
-	mutex.Lock()
-	defer mutex.Unlock()
-	results[vote]++
 }
 
 func init() {
