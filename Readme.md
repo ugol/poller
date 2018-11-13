@@ -5,6 +5,7 @@ A live poll in Go
 ## Usage
 
 ```
+go get github.com/ugol/poller/cmd
 go build
 ```
 
