@@ -25,12 +25,12 @@ Start a results server:
 Vote on different servers, for example:
 
 ```
-curl -X POST http://localhost:8080/polls/poll1/uno
-curl -X POST http://localhost:8080/polls/poll1/due
-curl -X POST http://localhost:8080/polls/poll1/tre
-curl -X POST http://localhost:8081/polls/poll1/due
-curl -X POST http://localhost:8082/polls/poll1/tre
-curl -X POST http://localhost:8082/polls/poll1/tre
+curl -X POST http://localhost:8080/polls/poll1/one
+curl -X POST http://localhost:8080/polls/poll1/two
+curl -X POST http://localhost:8080/polls/poll1/three
+curl -X POST http://localhost:8081/polls/poll1/two
+curl -X POST http://localhost:8082/polls/poll1/three
+curl -X POST http://localhost:8082/polls/poll1/three
 
 ```
 
