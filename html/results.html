@@ -20,6 +20,8 @@
 	</div>
 
 	<script>
+        var urlParams = new URLSearchParams(window.location.search);
+        console.log(urlParams.get('poll'));
         chart = new Chart(document.getElementById("bar-chart"), {
             type: 'horizontalBar',
             data: {
@@ -63,7 +65,7 @@
 
         (function poll() {
             $.ajax({
-                url: "../polls/results",
+                url: "../results/polls/" + urlParams.get('poll'),
                 type: "GET",
                 success: function(data) {
                     charData = [];

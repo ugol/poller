@@ -26,37 +26,29 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"sync"
+	"strings"
 	"time"
 )
 
-
 type Poll struct {
-	Name            string
-	PollDescription	string
+	PollDescription string
 	Options         map[string]string
 }
 
 var (
-	pollJson		string
-	logDir     		string
-	pollerAddress	string
-	mcastAddress	string
-
-	APP_ID			string
-
-	writeTimeout 	time.Duration
-	readTimeout 	time.Duration
-	idleTimeout 	time.Duration
+	pollJson      	string
+	logDir        	string
+	pollerAddress 	string
+	mcastAddress  	string
+	APP_ID 			string
+	writeTimeout    time.Duration
+	readTimeout     time.Duration
+	idleTimeout     time.Duration
 	gracefulTimeout time.Duration
-
 	mcastInterval	time.Duration
-
-	ThePoll 		*Poll
-	results 		map[string]int
-	mutex			sync.Mutex
-	vote  =			template.Must(template.ParseFiles("html/vote.html"))
-
+	Polls 			map[string]Poll
+	score 			*Score
+	vote  = 		template.Must(template.ParseFiles("html/vote.html"))
 )
 
 var startCmd = &cobra.Command{
@@ -73,21 +65,14 @@ poller start --address localhost:8080 --gracefulTimeout 1m --readTimeout 30s`,
 }
 
 func PollHandler(w http.ResponseWriter, r *http.Request) {
-
 	if r.Method == http.MethodPost {
-		log.Printf("Serving POST %v to %s\n", r.RequestURI, r.RemoteAddr  )
-
+		log.Printf("Serving POST %v to %s\n", r.RequestURI, r.RemoteAddr)
 		vars := mux.Vars(r)
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
-
 		vote := vars["vote"]
-
-		mutex.Lock()
-		defer mutex.Unlock()
-		if _, found := results[vote]; found {
-			results[vote]++
-
+		poll := strings.Split(r.RequestURI, "/")[2]
+		if score.VoteFor(poll, vote) {
 			fmt.Fprintf(w, "You voted: %v\n", vote)
 			log.Printf("Vote received: %v\n", vote)
 
@@ -97,72 +82,50 @@ func PollHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	} else if r.Method == http.MethodGet {
 		log.Printf("Serving GET %v to %s\n", r.RequestURI, r.RemoteAddr)
-		err := vote.ExecuteTemplate(w, "vote.html", ThePoll)
+		poll := strings.Split(r.RequestURI, "/")[2]
+		err := vote.ExecuteTemplate(w, "vote.html", Polls[poll])
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
-
-}
-
-func getResults() map[string]int {
-
-	copyResults := make(map[string]int)
-
-	mutex.Lock()
-	defer mutex.Unlock()
-	for key, value := range results {
-		copyResults[key] = value
-	}
-
-	return copyResults
 }
 
 func init() {
-
 	rootCmd.AddCommand(startCmd)
-
 	startCmd.Flags().StringVar(&logDir, "logdir", "tmp/poller", "")
 	startCmd.Flags().StringVar(&pollerAddress, "pollerAddress", "localhost:8080", "Address to bind on")
 	startCmd.Flags().StringVar(&mcastAddress, "mcastAddress", "224.0.0.1:9999", "Multicast address used to broadcast the results")
 	startCmd.Flags().StringVar(&pollJson, "pollJson", "polls/default.json", "Name of the JSON file describing the poll")
-
 	startCmd.Flags().StringVar(&APP_ID, "APP_ID", os.Getenv("APP_ID"), "APP_ID is an unique identifier that must be used when scaling poller horizontally. Only the last 5 bytes are significant")
-
-	startCmd.Flags().DurationVar(&mcastInterval, "mcastInterval", time.Second * 1, "Interval to multicast the results")
-
-	startCmd.Flags().DurationVar(&writeTimeout, "writeTimeout", time.Second * 15, "Write Timeout")
-	startCmd.Flags().DurationVar(&readTimeout, "readTimeout", time.Second * 15, "Read Timeout")
-	startCmd.Flags().DurationVar(&idleTimeout, "idleTimeout", time.Second * 60, "Idle Timeout")
-	startCmd.Flags().DurationVar(&gracefulTimeout, "gracefulTimeout", time.Second * 15, "Graceful Timeout is the duration for which the server gracefully wait for existing connections to finish")
-
+	startCmd.Flags().DurationVar(&mcastInterval, "mcastInterval", time.Second*1, "Interval to multicast the results")
+	startCmd.Flags().DurationVar(&writeTimeout, "writeTimeout", time.Second*15, "Write Timeout")
+	startCmd.Flags().DurationVar(&readTimeout, "readTimeout", time.Second*15, "Read Timeout")
+	startCmd.Flags().DurationVar(&idleTimeout, "idleTimeout", time.Second*60, "Idle Timeout")
+	startCmd.Flags().DurationVar(&gracefulTimeout, "gracefulTimeout", time.Second*15, "Graceful Timeout is the duration for which the server gracefully wait for existing connections to finish")
 }
 
 func broadcastResults() {
 	addr, err := net.ResolveUDPAddr("udp", mcastAddress)
+
 	if err != nil {
 		log.Fatal(err)
 	}
 	c, err := net.DialUDP("udp", nil, addr)
 	for {
-
-		r, err := json.Marshal(getResults())
-
+		r := score.GetResultsInJson()
 		if err != nil {
 			log.Println(err)
 		} else {
 			c.Write([]byte(fmt.Sprintf("%s%s", APP_ID[len(APP_ID)-5:], r)))
 		}
-
 		time.Sleep(mcastInterval)
 	}
 }
 
 func startPollServer() {
-
 	log.Println("Starting Poller server")
 
-	if len(APP_ID)<5 {
+	if len(APP_ID) < 5 {
 		log.Printf("APP_ID must be 5 bytes or greater, but is %d bytes. ('%s')\n", len(APP_ID), APP_ID)
 		os.Exit(1)
 	}
@@ -175,40 +138,30 @@ func startPollServer() {
 	}
 
 	defer file.Close()
-
-	err = json.NewDecoder(file).Decode(&ThePoll)
+	err = json.NewDecoder(file).Decode(&Polls)
 	if err != nil {
 		log.Println(err)
 		os.Exit(1)
 	}
 
-	log.Printf("Using JSON \"%s\" poll description:\n %s \n", pollJson, ThePoll)
-
-	results = make(map[string]int)
-
-	for option,_ := range ThePoll.Options {
-		results[option] = 0
+	log.Printf("Using JSON \"%s\" poll description:\n %s \n", pollJson, Polls)
+	score = NewScoreFromPolls(Polls)
+	log.Printf("\n GracefulTimeout %s\n WriteTimeout %s\n ReadTimeout %s\n IdleTimeout %s\n", gracefulTimeout, writeTimeout, readTimeout, idleTimeout)
+	r := mux.NewRouter()
+	for name := range Polls {
+		var voteUrl = fmt.Sprintf("/polls/%s/leaveyourvote", name)
+		var votesUrl = fmt.Sprintf("/polls/%s/{vote}", name)
+		r.HandleFunc(voteUrl, PollHandler).Methods("GET")
+		r.HandleFunc(votesUrl, PollHandler).Methods("POST")
 	}
 
-	log.Printf("\n GracefulTimeout %s\n WriteTimeout %s\n ReadTimeout %s\n IdleTimeout %s\n", gracefulTimeout, writeTimeout, readTimeout, idleTimeout )
-
-	r := mux.NewRouter()
-
-	var voteUrl = fmt.Sprintf("/polls/%s/leaveyourvote", ThePoll.Name)
-	var votesUrl = fmt.Sprintf("/polls/%s/{vote}", ThePoll.Name)
-
-	r.HandleFunc(voteUrl, PollHandler).Methods("GET")
-	r.HandleFunc(votesUrl, PollHandler).Methods("POST")
-
 	http.Handle("/", r)
-
 	srv := &http.Server{
-
 		Addr:         pollerAddress,
 		WriteTimeout: writeTimeout,
 		ReadTimeout:  readTimeout,
 		IdleTimeout:  idleTimeout,
-		Handler: r,
+		Handler:      r,
 	}
 
 	go func() {
@@ -228,7 +181,6 @@ func startPollServer() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	<-c
-
 	ctx, cancel := context.WithTimeout(context.Background(), gracefulTimeout)
 	defer cancel()
 

@@ -1,9 +1,18 @@
 {
-  "name": "poll1",
-  "pollDescription": "What number do you think is the best?",
-  "options": {
-    "one": "One is definitely the first",
-    "two": "Two is better than one",
-    "three": "Three is the magic number"
+  "poll1": {
+    "pollDescription": "What number do you think is the best?",
+    "options": {
+      "one": "One is definitely the first",
+      "two": "Two is better than one",
+      "three": "Three is the magic number"
+    }
+  },
+  "poll2": {
+    "pollDescription": "Another silly poll, choose another number",
+    "options": {
+      "four": "Four is two plus two",
+      "five": "Five is the number of fingers",
+      "six": "Six is six"
+    }
   }
 }

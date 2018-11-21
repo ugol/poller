@@ -25,12 +25,13 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 )
 
 var (
 	resultAddress	string
-	partialResults	map[string]map[string]int
+	partialResults	map[string]map[string]map[string]int
 )
 
 var resultsCmd = &cobra.Command{
@@ -48,13 +49,15 @@ poller results --address localhost:8082 --gracefulTimeout 1m --readTimeout 30s`,
 
 func ResultsHandler(w http.ResponseWriter, r *http.Request) {
 
+	poll := strings.Split(r.RequestURI, "/")[3]
+
 	res := make(map[string]int)
-	for option := range ThePoll.Options {
+	for option := range Polls[poll].Options {
 		res[option] = 0
 	}
 
 	for _, m := range partialResults {
-		for k, v := range m {
+		for k, v := range m[poll] {
 			res[k] = res[k] + v
 		}
 	}
@@ -76,12 +79,10 @@ func ResultsHandler(w http.ResponseWriter, r *http.Request) {
 func init() {
 
 	rootCmd.AddCommand(resultsCmd)
-
 	resultsCmd.Flags().StringVar(&logDir, "logdir", "tmp/poller", "")
 	resultsCmd.Flags().StringVar(&resultAddress, "resultAddress", "localhost:9090", "Address to bind on")
 	resultsCmd.Flags().StringVar(&mcastAddress, "mcastAddress", "224.0.0.1:9999", "Multicast address used to broadcast the results")
 	resultsCmd.Flags().StringVar(&pollJson, "pollJson", "polls/default.json", "Name of the JSON file describing the poll")
-
 	resultsCmd.Flags().DurationVar(&writeTimeout, "writeTimeout", time.Second * 15, "Write Timeout")
 	resultsCmd.Flags().DurationVar(&readTimeout, "readTimeout", time.Second * 15, "Read Timeout")
 	resultsCmd.Flags().DurationVar(&idleTimeout, "idleTimeout", time.Second * 60, "Idle Timeout")
@@ -90,14 +91,10 @@ func init() {
 }
 
 func msgHandler(_ *net.UDPAddr, n int, b []byte) {
-
 	appId := string(b[0:5])
-	m := make(map[string]int)
+	m := make(map[string]map[string]int)
 	json.Unmarshal(b[5:n], &m)
-
 	partialResults[appId] = m
-	//log.Println(partialResults)
-
 }
 
 func getResultsFromMulticastUDP(a string, h func(*net.UDPAddr, int, []byte)) {
@@ -119,10 +116,7 @@ func getResultsFromMulticastUDP(a string, h func(*net.UDPAddr, int, []byte)) {
 
 
 func startResultServer() {
-
 	log.Println("Starting Result server")
-
-
 	file, err := os.Open(pollJson)
 	if err != nil {
 		log.Println(err)
@@ -132,29 +126,27 @@ func startResultServer() {
 
 	defer file.Close()
 
-	err = json.NewDecoder(file).Decode(&ThePoll)
+	err = json.NewDecoder(file).Decode(&Polls)
 	if err != nil {
 		log.Println(err)
 		os.Exit(1)
 	}
 
-	log.Printf("Using JSON \"%s\" ThePoll description:\n %s \n", pollJson, ThePoll)
+	log.Printf("Using JSON \"%s\" Polls description:\n %s \n", pollJson, Polls)
 
-	partialResults = make(map[string]map[string]int)
+	partialResults = make(map[string]map[string]map[string]int)
 
 	log.Printf("\n GracefulTimeout %s\n WriteTimeout %s\n ReadTimeout %s\n IdleTimeout %s\n", gracefulTimeout, writeTimeout, readTimeout, idleTimeout )
 
 	r := mux.NewRouter()
 
-	var resultsUrl = fmt.Sprintf("/polls/results")
-
-	r.HandleFunc(resultsUrl, ResultsHandler).Methods("GET")
+	for name := range Polls {
+		var resultsUrl = fmt.Sprintf("/results/polls/%s", name)
+		r.HandleFunc(resultsUrl, ResultsHandler).Methods("GET")
+	}
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("html"))))
-
 	http.Handle("/", r)
-
 	srv := &http.Server{
-
 		Addr:         resultAddress,
 		WriteTimeout: writeTimeout,
 		ReadTimeout:  readTimeout,
@@ -179,7 +171,6 @@ func startResultServer() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	<-c
-
 	ctx, cancel := context.WithTimeout(context.Background(), gracefulTimeout)
 	defer cancel()
 
