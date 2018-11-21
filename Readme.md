@@ -10,7 +10,7 @@ go build
 
 The default JSON defines 2 polls, the format is:
 
-```
+```json
 {
   "poll1": {
     "pollDescription": "What number do you think is the best?",
