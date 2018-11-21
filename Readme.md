@@ -69,11 +69,12 @@ curl -X POST http://localhost:8082/polls/poll2/six
 
 ```
 
-The (not so nice, I know) voting GUI can be reached at:
+The (not so nice, I know) voting GUI can be reached on each poller server:
 
 ```http request
-http://localhost:9090/polls/poll1/leaveyourvote
-http://localhost:9090/polls/poll2/leaveyourvote
+http://localhost:8080/polls/poll1/leaveyourvote
+http://localhost:8081/polls/poll2/leaveyourvote
+http://localhost:8082/polls/poll1/leaveyourvote
 ```
 
 Observe that results are aggregated on results server:
