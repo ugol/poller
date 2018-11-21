@@ -1,0 +1,5 @@
+FROM scratch
+ADD poller /
+ADD html/ html/
+ADD polls/ polls/
+CMD ["/poller"]

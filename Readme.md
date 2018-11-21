@@ -91,9 +91,27 @@ http://localhost:9090/static/results.html?poll=poll1
 http://localhost:9090/static/results.html?poll=poll2
 ```
 
+## Building a Docker image
+
+### Standard Docker image
+
+This image is built using the official golang image
+```
+sudo docker build .
+```
+
+### Minimal Docker image
+
+This image is built just with the binary and is just a few Mb.
+```
+CGO_ENABLED=0 go build -a -installsuffix cgo -o
+sudo docker build -f Dockerfile.minimal .
+```
+
 ## Getting help
 
 ```bash
 ./poller start -h
 ./poller results -h
 ```
+
