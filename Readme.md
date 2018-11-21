@@ -4,9 +4,15 @@ A live poll in Go
 
 ## Usage
 
-```
+Building and compiling
+
+```bash
+cd poller
 go build
+go get -u
 ```
+
+## Usage
 
 The default JSON defines 2 polls, the format is:
 
@@ -32,7 +38,8 @@ The default JSON defines 2 polls, the format is:
 ```
 
 Start several poller servers:
-```
+
+```bash
 export APP_ID=10000 && ./poller start
 export APP_ID=10001 && ./poller start --pollerAddress=localhost:8081
 export APP_ID=10002 && ./poller start --pollerAddress=localhost:8082
@@ -40,13 +47,13 @@ export APP_ID=10002 && ./poller start --pollerAddress=localhost:8082
 
 Start a results server:
 
-```
+```bash
 ./poller results
 ```
 
 Vote on different servers, for example:
 
-```
+```bash
 curl -X POST http://localhost:8080/polls/poll1/one
 curl -X POST http://localhost:8080/polls/poll1/two
 curl -X POST http://localhost:8080/polls/poll1/three
@@ -64,28 +71,28 @@ curl -X POST http://localhost:8082/polls/poll2/six
 
 The (not so nice, I know) voting GUI can be reached at:
 
-```
+```http request
 http://localhost:9090/polls/poll1/leaveyourvote
 http://localhost:9090/polls/poll2/leaveyourvote
 ```
 
 Observe that results are aggregated on results server:
 
-```
+```bash
 curl http://localhost:9090/results/polls/poll1
 curl http://localhost:9090/results/polls/poll2
 ```
 
 Or go to the fantastic results GUI at:
 
-```
+```http request
 http://localhost:9090/static/results.html?poll=poll1
 http://localhost:9090/static/results.html?poll=poll2
 ```
 
 ## Getting help
 
-```
+```bash
 ./poller start -h
 ./poller results -h
 ```
