@@ -21,17 +21,17 @@ The default JSON defines 2 polls, the format is:
   "poll1": {
     "pollDescription": "What number do you think is the best?",
     "options": {
-      "one": "One is definitely the first",
-      "two": "Two is better than one",
-      "three": "Three is the magic number"
+      "1-one": "One is definitely the first",
+      "2-two": "Two is better than one",
+      "3-three": "Three is the magic number"
     }
   },
   "poll2": {
     "pollDescription": "Another silly poll, choose another number",
     "options": {
-      "four": "Four is two plus two",
-      "five": "Five is the number of fingers",
-      "six": "Six is six"
+      "1-four": "Four is two plus two",
+      "2-five": "Five is the number of fingers",
+      "3-six": "Six is six"
     }
   }
 }
@@ -54,18 +54,18 @@ Start a results server:
 Vote on different servers, for example:
 
 ```bash
-curl -X POST http://localhost:8080/polls/poll1/one
-curl -X POST http://localhost:8080/polls/poll1/two
-curl -X POST http://localhost:8080/polls/poll1/three
-curl -X POST http://localhost:8081/polls/poll1/two
-curl -X POST http://localhost:8082/polls/poll1/three
-curl -X POST http://localhost:8082/polls/poll1/three
+curl -X POST http://localhost:8080/polls/poll1/1-one
+curl -X POST http://localhost:8080/polls/poll1/2-two
+curl -X POST http://localhost:8080/polls/poll1/3-three
+curl -X POST http://localhost:8081/polls/poll1/2-two
+curl -X POST http://localhost:8082/polls/poll1/3-three
+curl -X POST http://localhost:8082/polls/poll1/3-three
 
-curl -X POST http://localhost:8080/polls/poll2/four
-curl -X POST http://localhost:8080/polls/poll2/four
-curl -X POST http://localhost:8080/polls/poll2/four
-curl -X POST http://localhost:8081/polls/poll2/five
-curl -X POST http://localhost:8082/polls/poll2/six
+curl -X POST http://localhost:8080/polls/poll2/1-four
+curl -X POST http://localhost:8080/polls/poll2/1-four
+curl -X POST http://localhost:8080/polls/poll2/1-four
+curl -X POST http://localhost:8081/polls/poll2/2-five
+curl -X POST http://localhost:8082/polls/poll2/3-six
 
 ```
 
