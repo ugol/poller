@@ -1,0 +1,3 @@
+http://releaz.it/polls/poll1/one POST
+http://releaz.it/polls/poll1/two POST
+http://releaz.it/polls/poll1/three POST
