@@ -1,5 +1,6 @@
-FROM scratch
-ADD poller /
+FROM alpine:latest
 ADD html/ html/
 ADD polls/ polls/
-CMD ["/poller"]
+ADD poller /
+ADD start.sh /
+CMD ["/start.sh"]

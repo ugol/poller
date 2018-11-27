@@ -36,33 +36,36 @@ type Poll struct {
 }
 
 var (
-	pollJson      	string
-	logDir        	string
-	pollerAddress 	string
-	mcastAddress  	string
-	APP_ID 			string
+	pollJson        string
+	logDir          string
+	pollerAddress   string
+	mcastAddress    string
+	APP_ID          string
 	writeTimeout    time.Duration
 	readTimeout     time.Duration
 	idleTimeout     time.Duration
 	gracefulTimeout time.Duration
-	mcastInterval	time.Duration
-	Polls 			map[string]Poll
-	score 			*Score
-	vote  = 		template.Must(template.ParseFiles("html/vote.html"))
+	mcastInterval   time.Duration
+	Polls           map[string]Poll
+	score           *Score
 )
 
-var startCmd = &cobra.Command{
-	Use:   "start",
-	Short: "Start the poller server",
-	Long: `Start the poller server:
+var (
+	vote = template.Must(template.ParseFiles("html/vote.html"))
+
+	startCmd = &cobra.Command{
+		Use:   "start",
+		Short: "Start the poller server",
+		Long: `Start the poller server:
 
 poller start --address localhost:8080
 poller start --address localhost:8080 --gracefulTimeout 1m
 poller start --address localhost:8080 --gracefulTimeout 1m --readTimeout 30s`,
-	Run: func(cmd *cobra.Command, args []string) {
-		startPollServer()
-	},
-}
+		Run: func(cmd *cobra.Command, args []string) {
+			startPollServer()
+		},
+	}
+)
 
 func PollHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
