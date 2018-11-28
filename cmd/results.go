@@ -26,12 +26,14 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"time"
 )
 
 var (
 	resultAddress	string
 	partialResults	map[string]map[string]map[string]int
+	mutex			sync.Mutex
 )
 
 var resultsCmd = &cobra.Command{
@@ -55,6 +57,9 @@ func ResultsHandler(w http.ResponseWriter, r *http.Request) {
 	for option := range Polls[poll].Options {
 		res[option] = 0
 	}
+
+	mutex.Lock()
+	defer mutex.Unlock()
 
 	for _, m := range partialResults {
 		for k, v := range m[poll] {
@@ -94,6 +99,8 @@ func msgHandler(_ *net.UDPAddr, n int, b []byte) {
 	appId := string(b[0:5])
 	m := make(map[string]map[string]int)
 	json.Unmarshal(b[5:n], &m)
+	mutex.Lock()
+	defer mutex.Unlock()
 	partialResults[appId] = m
 }
 
