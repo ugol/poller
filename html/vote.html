@@ -32,11 +32,11 @@
 <h1>Poll: {{.PollDescription}} </h1>
 
 
-{{range .Options}}
+{{range $k, $v := .Options}}
 
-<form method="post" action="{{.}}" class="inline">
+<form method="post" action="{{$k}}" class="inline">
     <input type="hidden" name="extra_submit_param" value="extra_submit_value">
-    <button type="submit" name="submit_param" value="{{.}}" class="link-button">
+    <button type="submit" name="submit_param" value="{{$k}}" class="link-button">
     {{.}}
     </button>
 </form>
