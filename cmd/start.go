@@ -68,24 +68,38 @@ poller start --address localhost:8080 --gracefulTimeout 1m --readTimeout 30s`,
 )
 
 func PollHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
-		log.Printf("Serving POST %v to %s\n", r.RequestURI, r.RemoteAddr)
-		vars := mux.Vars(r)
-		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Content-Type", "application/json")
-		vote := vars["vote"]
-		poll := strings.Split(r.RequestURI, "/")[2]
-		if score.VoteFor(poll, vote) {
-			fmt.Fprintf(w, "You voted: %v\n", vote)
-			log.Printf("Vote received: %v\n", vote)
 
+	poll := strings.Split(r.RequestURI, "/")[2]
+
+	if r.Method == http.MethodPost {
+		hasVoted, _ := r.Cookie("poller")
+		log.Printf("Serving POST %v to %s\n", r.RequestURI, r.RemoteAddr)
+		log.Printf("Cookie: %v\n", hasVoted)
+
+		vars := mux.Vars(r)
+		vote := vars["vote"]
+
+		if hasVoted != nil && hasVoted.Value == poll {
+			fmt.Fprint(w, "You have already voted for this poll\n")
+			log.Print("You have already voted for this poll\n")
 		} else {
-			fmt.Fprintf(w, "Invalid voted received: %v\n", vote)
-			log.Printf("Invalid vote: %v\n", vote)
+			if score.VoteFor(poll, vote) {
+				expiration := time.Now().Add( 10 * time.Minute)
+				voted := http.Cookie{Name: "poller", Value: poll, Expires: expiration}
+				http.SetCookie(w, &voted)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+				fmt.Fprintf(w, "You voted: %v\n", vote)
+				log.Printf("Vote received: %v\n", vote)
+
+			} else {
+				fmt.Fprintf(w, "Invalid voted received: %v\n", vote)
+				log.Printf("Invalid vote: %v\n", vote)
+			}
 		}
+
 	} else if r.Method == http.MethodGet {
 		log.Printf("Serving GET %v to %s\n", r.RequestURI, r.RemoteAddr)
-		poll := strings.Split(r.RequestURI, "/")[2]
 		err := vote.ExecuteTemplate(w, "vote.html", Polls[poll])
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
