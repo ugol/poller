@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"html/template"
 	"log"
@@ -172,6 +173,9 @@ func startPollServer() {
 		r.HandleFunc(votesUrl, PollHandler).Methods("POST")
 	}
 
+	r.Path("/metrics").Handler(promhttp.Handler())
+
+
 	http.Handle("/", r)
 	srv := &http.Server{
 		Addr:         pollerAddress,
@@ -201,7 +205,12 @@ func startPollServer() {
 	ctx, cancel := context.WithTimeout(context.Background(), gracefulTimeout)
 	defer cancel()
 
-	srv.Shutdown(ctx)
-	log.Println("Shutting down")
-	os.Exit(0)
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Printf("Error %v during shutdown\n", err)
+		os.Exit(1)
+	} else {
+		log.Println("Shutting down")
+		os.Exit(0)
+	}
+
 }
