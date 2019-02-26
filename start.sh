@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 APP_ID=${HOSTNAME:(-5)}
 if [ "${typology}" == "results" ]
 then
