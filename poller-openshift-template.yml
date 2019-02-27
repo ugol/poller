@@ -330,15 +330,12 @@ parameters:
   - name: APP_NAME
     displayName: App Name
     description: The Name of the App
-    value: poller
     required: true 
   - name: APP_DOMAIN
     displayName: App Domain
     description: The Domain of the App
-    value: apps.example.com
     required: true
   - name: APP_REPO
     displayName: App Repo
     description: The Repo of the APp
-    value: https://github.com/ugol/poller.git
     required: true
