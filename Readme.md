@@ -122,10 +122,20 @@ First, import the template into OpenShift:
 oc create -f poller-openshift-template.yml -n openshift
 ```
 
-Deploy the Poller from the service catalog.
+### Deploy from Service Catalog
+Deploy the service Poller from the service catalog.
 
 Enable the multicast into the project where you deployed the Poller.
 
 ```bash
 oc annotate netnamespace <project> netnamespace.network.openshift.io/multicast-enabled=true
+```
+
+### Deploy from CLI
+
+```bash
+oc new-project <project>
+oc project <project>
+oc annotate netnamespace <project> netnamespace.network.openshift.io/multicast-enabled=true
+oc new-app --template=poller-template -p APP_REPO=<gitRepo> -p APP_NAME=<name> -p APP_DOMAIN=<domain>
 ```
