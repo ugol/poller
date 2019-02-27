@@ -29,7 +29,7 @@
 </head>
 <body>
 
-<h1>Pollo: {{.PollDescription}} </h1>
+<h1>Poll: {{.PollDescription}} </h1>
 
 
 {{range $k, $v := .Options}}
