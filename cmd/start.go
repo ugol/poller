@@ -91,6 +91,7 @@ func PollHandler(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "text/html; charset=UTF-8")
 				w.WriteHeader(http.StatusOK)
 				fmt.Fprintf(w, "You voted: %v\n", vote)
+                                fmt.Fprintf(w, "<a href=\"../../../static/results.html?poll=%v\">Go to results.</a>", poll)
 				log.Printf("Vote received: %v\n", vote)
 
 			} else {
