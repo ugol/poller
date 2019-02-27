@@ -88,7 +88,7 @@ func PollHandler(w http.ResponseWriter, r *http.Request) {
 				expiration := time.Now().Add( 10 * time.Minute)
 				voted := http.Cookie{Name: "poller", Value: poll, Expires: expiration}
 				http.SetCookie(w, &voted)
-				w.Header().Set("Content-Type", "application/json")
+				w.Header().Set("Content-Type", "text/html; charset=UTF-8")
 				w.WriteHeader(http.StatusOK)
 				fmt.Fprintf(w, "You voted: %v\n", vote)
 				log.Printf("Vote received: %v\n", vote)
