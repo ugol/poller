@@ -72,6 +72,18 @@ objects:
       type: Docker
     successfulBuildsHistoryLimit: 5
     triggers:
+    - github:
+        secret: ${GITHUB_WEBHOOK_SECRET}
+      type: GitHub
+    - gitlab:
+        secret: ${GITLAB_WEBHOOK_SECRET}
+      type: GitLab
+    - bitbucket:
+        secret: ${BITBUCKET_WEBHOOK_SECRET}
+      type: Bitbucket
+    - generic:
+        secret: ${GENERIC_WEBHOOK_SECRET}
+      type: Generic
     - type: ConfigChange
     - imageChange:
       type: ImageChange
@@ -339,3 +351,19 @@ parameters:
     displayName: App Repo
     description: The Repo of the APp
     required: true
+  - name: GITHUB_WEBHOOK_SECRET
+    description: A secret string used to configure the GitHub webhook
+    generate: expression
+    from: "[a-zA-Z0-9]{40}"
+  - name: GITLAB_WEBHOOK_SECRET
+    description: A secret string used to configure the GitLab webhook
+    generate: expression
+    from: "[a-zA-Z0-9]{40}"
+  - name: BITBUCKET_WEBHOOK_SECRET
+    description: A secret string used to configure the Bitbucket webhook
+    generate: expression
+    from: "[a-zA-Z0-9]{40}"
+  - name: GENERIC_WEBHOOK_SECRET
+    description: A secret string used to configure the Generic webhook
+    generate: expression
+    from: "[a-zA-Z0-9]{40}"
