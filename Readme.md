@@ -117,7 +117,6 @@ sudo docker build -f Dockerfile.minimal .
 
 ## Usage with Red Hat OpenShift
 First, import the template into OpenShift:
-
 ```bash
 oc create -f poller-openshift-template.yml -n openshift
 ```
@@ -126,16 +125,23 @@ oc create -f poller-openshift-template.yml -n openshift
 Deploy the service Poller from the service catalog.
 
 Enable the multicast into the project where you deployed the Poller.
-
 ```bash
 oc annotate netnamespace <project> netnamespace.network.openshift.io/multicast-enabled=true
 ```
 
 ### Deploy from CLI
 
+Create the project.
 ```bash
 oc new-project <project>
-oc project <project>
+```
+
+Enable the multicast into the project.
+```bash
 oc annotate netnamespace <project> netnamespace.network.openshift.io/multicast-enabled=true
+```
+
+Deploy the app.
+```bash
 oc new-app --template=poller-template -p APP_REPO=<gitRepo> -p APP_NAME=<name> -p APP_DOMAIN=<domain>
 ```
