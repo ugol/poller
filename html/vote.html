@@ -1,35 +1,47 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
 <head>
-<script>
-function getVote(string) {
-  if (window.XMLHttpRequest) {
-    // code for IE7+, Firefox, Chrome, Opera, Safari
-    xmlhttp=new XMLHttpRequest();
-  } else {  // code for IE6, IE5
-    xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
-  }
-  xmlhttp.onreadystatechange=function() {
-    if (this.readyState==4 && this.status==200) {
-      document.getElementById("poll").innerHTML=this.responseText;
-    }
-  }
-  xmlhttp.open("POST",string,true);
-  xmlhttp.send();
-}
-</script>
+    <meta charset="UTF-8">
+    <title>{{.PollDescription}}</title>
+    <style>
+        .inline {
+            display: inline;
+        }
+
+        .link-button {
+            background: none;
+            border: none;
+            color: blue;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 1em;
+            font-family: serif;
+        }
+
+        .link-button:focus {
+            outline: none;
+        }
+
+        .link-button:active {
+            color: red;
+        }
+    </style>
 </head>
 <body>
 
-<div id="poll">
-<h3>{{.PollDescription}}</h3>
+<h1>Pollo: {{.PollDescription}} </h1>
+
+
 {{range $k, $v := .Options}}
-<form>
-{{.}}:
-<input type="radio" name="vote" value="{{$k}}" onclick="getVote(this.value)">
+
+<form method="post" action="{{$k}}" class="inline">
+    <input type="hidden" name="extra_submit_param" value="extra_submit_value">
+    <button type="submit" name="submit_param" value="{{$k}}" class="link-button">
+    {{.}}
+    </button>
 </form>
+
 <br>
 {{end}}
-</div>
 </body>
 </html>
