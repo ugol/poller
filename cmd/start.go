@@ -55,7 +55,6 @@ var (
 )
 
 var (
-	vote = template.Must(template.ParseFiles("templates/vote.template"))
 
 	totalVotes = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "poller_total_votes",
@@ -76,6 +75,12 @@ var (
 		Name: "poller_retried_votes",
 		Help: "The total number of votes receiving an 'already voted' answer",
 	})
+
+)
+
+
+var (
+	vote = template.Must(template.ParseFiles("templates/vote.template"))
 
 	startCmd = &cobra.Command{
 		Use:   "start",
