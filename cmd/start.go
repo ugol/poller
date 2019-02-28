@@ -121,7 +121,7 @@ func PollHandler(w http.ResponseWriter, r *http.Request) {
 				http.SetCookie(w, &voted)
 				w.Header().Set("Content-Type", "text/html; charset=UTF-8")
 				w.WriteHeader(http.StatusOK)
-				fmt.Fprintf(w, "You voted: %v\n\"<br><a href=\"../../../static/results.html?poll=%v\">Go to results</a>", vote, poll)
+				fmt.Fprintf(w, "You voted: %v\n<br><a href=\"../../../static/results.html?poll=%v\">Go to results</a>", vote, poll)
 				log.Printf("Vote received: %v\n", vote)
 				validVotes.Inc()
 
