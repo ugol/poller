@@ -57,7 +57,7 @@ var (
 var (
 
 	totalVotes = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "poller processed_votes_total",
+		Name: "poller total_votes",
 		Help: "The total number of processed votes",
 	})
 
@@ -72,7 +72,7 @@ var (
 	})
 
 	votesRetried = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "poller votes_retried",
+		Name: "poller retried_votes",
 		Help: "The total number of votes receiving an 'already voted' answer",
 	})
 
