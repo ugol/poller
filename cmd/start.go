@@ -19,6 +19,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"html/template"
@@ -47,12 +49,33 @@ var (
 	idleTimeout     time.Duration
 	gracefulTimeout time.Duration
 	mcastInterval   time.Duration
+	cookieDuration	time.Duration
 	Polls           map[string]Poll
 	score           *Score
 )
 
 var (
 	vote = template.Must(template.ParseFiles("templates/vote.template"))
+
+	totalVotes = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "poller_total_votes",
+		Help: "The total number of processed votes",
+	})
+
+	validVotes = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "poller_valid_votes",
+		Help: "The total number of valid votes",
+	})
+
+	invalidVotes = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "poller_invalid_votes",
+		Help: "The total number of invalid votes",
+	})
+
+	votesRetried = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "poller_retried_votes",
+		Help: "The total number of votes receiving an 'already voted' answer",
+	})
 
 	startCmd = &cobra.Command{
 		Use:   "start",
@@ -79,23 +102,27 @@ func PollHandler(w http.ResponseWriter, r *http.Request) {
 
 		vars := mux.Vars(r)
 		vote := vars["vote"]
+		totalVotes.Inc()
 
 		if hasVoted != nil && hasVoted.Value == poll {
 			fmt.Fprint(w, "You have already voted for this poll\n")
 			log.Print("You have already voted for this poll\n")
+			votesRetried.Inc()
 		} else {
 			if score.VoteFor(poll, vote) {
-				expiration := time.Now().Add( 10 * time.Minute)
+				expiration := time.Now().Add(cookieDuration)
 				voted := http.Cookie{Name: "poller", Value: poll, Expires: expiration}
 				http.SetCookie(w, &voted)
 				w.Header().Set("Content-Type", "text/html; charset=UTF-8")
 				w.WriteHeader(http.StatusOK)
 				fmt.Fprintf(w, "You voted: %v\n", vote)
 				log.Printf("Vote received: %v\n", vote)
+				validVotes.Inc()
 
 			} else {
 				fmt.Fprintf(w, "Invalid voted received: %v\n", vote)
 				log.Printf("Invalid vote: %v\n", vote)
+				invalidVotes.Inc()
 			}
 		}
 
@@ -119,7 +146,9 @@ func init() {
 	startCmd.Flags().DurationVar(&writeTimeout, "writeTimeout", time.Second*15, "Write Timeout")
 	startCmd.Flags().DurationVar(&readTimeout, "readTimeout", time.Second*15, "Read Timeout")
 	startCmd.Flags().DurationVar(&idleTimeout, "idleTimeout", time.Second*60, "Idle Timeout")
+	startCmd.Flags().DurationVar(&cookieDuration, "cookieDuration", time.Second*60*2, "Cookie duration: can't vote again if you have this cookie set")
 	startCmd.Flags().DurationVar(&gracefulTimeout, "gracefulTimeout", time.Second*15, "Graceful Timeout is the duration for which the server gracefully wait for existing connections to finish")
+
 }
 
 func broadcastResults() {
