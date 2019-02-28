@@ -52,7 +52,7 @@ var (
 )
 
 var (
-	vote = template.Must(template.ParseFiles("html/vote.html"))
+	vote = template.Must(template.ParseFiles("templates/vote.template"))
 
 	startCmd = &cobra.Command{
 		Use:   "start",
@@ -101,7 +101,7 @@ func PollHandler(w http.ResponseWriter, r *http.Request) {
 
 	} else if r.Method == http.MethodGet {
 		log.Printf("Serving GET %v to %s\n", r.RequestURI, r.RemoteAddr)
-		err := vote.ExecuteTemplate(w, "vote.html", Polls[poll])
+		err := vote.ExecuteTemplate(w, "vote.template", Polls[poll])
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
