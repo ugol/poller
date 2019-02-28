@@ -19,6 +19,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"html/template"
@@ -53,6 +55,31 @@ var (
 )
 
 var (
+
+	totalVotes = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "poller processed_votes_total",
+		Help: "The total number of processed votes",
+	})
+
+	validVotes = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "poller valid_votes",
+		Help: "The total number of valid votes",
+	})
+
+	invalidVotes = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "poller invalid_votes",
+		Help: "The total number of invalid votes",
+	})
+
+	votesRetried = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "poller votes_retried",
+		Help: "The total number of votes receiving an 'already voted' answer",
+	})
+
+)
+
+
+var (
 	vote = template.Must(template.ParseFiles("html/vote.html"))
 
 	startCmd = &cobra.Command{
@@ -80,10 +107,12 @@ func PollHandler(w http.ResponseWriter, r *http.Request) {
 
 		vars := mux.Vars(r)
 		vote := vars["vote"]
+		totalVotes.Inc()
 
 		if hasVoted != nil && hasVoted.Value == poll {
 			fmt.Fprint(w, "You have already voted for this poll\n")
 			log.Print("You have already voted for this poll\n")
+			votesRetried.Inc()
 		} else {
 			if score.VoteFor(poll, vote) {
 				expiration := time.Now().Add(cookieDuration)
@@ -93,10 +122,12 @@ func PollHandler(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				fmt.Fprintf(w, "You voted: %v\n", vote)
 				log.Printf("Vote received: %v\n", vote)
+				validVotes.Inc()
 
 			} else {
 				fmt.Fprintf(w, "Invalid voted received: %v\n", vote)
 				log.Printf("Invalid vote: %v\n", vote)
+				invalidVotes.Inc()
 			}
 		}
 
