@@ -110,7 +110,7 @@ func PollHandler(w http.ResponseWriter, r *http.Request) {
 		totalVotes.Inc()
 
 		if hasVoted != nil && hasVoted.Value == poll {
-			fmt.Fprint(w, "You have already voted for this poll\n")
+			fmt.Fprint(w, "You have already voted for this poll\n<br><a href=\"../../../static/results.html?poll=%v\">Go to results</a>", poll)
 			log.Print("You have already voted for this poll\n")
 			votesRetried.Inc()
 		} else {
@@ -121,6 +121,7 @@ func PollHandler(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "text/html; charset=UTF-8")
 				w.WriteHeader(http.StatusOK)
 				fmt.Fprintf(w, "You voted: %v\n", vote)
+				fmt.Fprintf(w, "<br><a href=\"../../../static/results.html?poll=%v\">Go to results</a>", poll)
 				log.Printf("Vote received: %v\n", vote)
 				validVotes.Inc()
 
