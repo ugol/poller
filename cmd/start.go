@@ -107,13 +107,13 @@ func PollHandler(w http.ResponseWriter, r *http.Request) {
 
 		vars := mux.Vars(r)
 		vote := vars["vote"]
-		totalVotes.Inc()
+		totalVotes.With(prometheus.Labels{"poll":poll}).Inc()
 
 		if hasVoted != nil && hasVoted.Value == poll {
 			fmt.Fprint(w, "You have already voted for this poll\n")
 			fmt.Fprintf(w, "<br><a href=\"../../../static/results.html?poll=%v\">Go to results</a>", poll)
 			log.Print("You have already voted for this poll\n")
-			votesRetried.Inc()
+			votesRetried.With(prometheus.Labels{"poll":poll}).Inc()
 		} else {
 			if score.VoteFor(poll, vote) {
 				expiration := time.Now().Add(cookieDuration)
@@ -123,12 +123,12 @@ func PollHandler(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				fmt.Fprintf(w, "You voted: %v\n<br><a href=\"../../../static/results.html?poll=%v\">Go to results</a>", vote, poll)
 				log.Printf("Vote received: %v\n", vote)
-				validVotes.Inc()
+				validVotes.With(prometheus.Labels{"poll":poll}).Inc()
 
 			} else {
 				fmt.Fprintf(w, "Invalid voted received: %v\n", vote)
 				log.Printf("Invalid vote: %v\n", vote)
-				invalidVotes.Inc()
+				invalidVotes.With(prometheus.Labels{"poll":poll}).Inc()
 			}
 		}
 
