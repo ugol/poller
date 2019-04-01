@@ -104,7 +104,7 @@ sudo docker build .
 
 This image is built just with the binary and is just a few Mb.
 ```
-CGO_ENABLED=0 go build -a -installsuffix cgo -o
+CGO_ENABLED=0 go build -a -installsuffix cgo -o poller .
 sudo docker build -f Dockerfile.minimal .
 ```
 
